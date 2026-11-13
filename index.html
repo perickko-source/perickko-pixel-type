@@ -21,10 +21,10 @@
   #btnBomb { background:rgba(255,140,26,.6); }
   #btnForce { background:rgba(47,157,240,.6); font-size:16px; }
   #touchControls button:active { filter:brightness(1.5); }
-  /* JOYSTICK VIRTUAL */
+  /* JOYSTICK VIRTUAL - MÁS TRANSPARENTE */
   #joystick { position:fixed; left:30px; bottom:30px; width:140px; height:140px; display:none; z-index:20; }
-  #joystickBase { position:absolute; width:140px; height:140px; border-radius:50%; background:rgba(255,255,255,0.15); border:3px solid rgba(255,255,255,0.3); }
-  #joystickThumb { position:absolute; width:60px; height:60px; border-radius:50%; background:rgba(255,255,255,0.5); border:3px solid rgba(255,255,255,0.8); top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; }
+  #joystickBase { position:absolute; width:140px; height:140px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid rgba(255,255,255,0.18); }
+  #joystickThumb { position:absolute; width:60px; height:60px; border-radius:50%; background:rgba(255,255,255,0.22); border:2px solid rgba(255,255,255,0.45); top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; }
 </style>
 </head>
 <body>
@@ -42,9 +42,10 @@
 <script>
 'use strict';
 /* ════════════════════════════════════════════════
-   PIXELMASTER · Joystick virtual fijo (solo móvil)
-   PC: teclado (flechas/WASD)
-   Móvil: joystick izquierdo + botones derechos
+   PIXELMASTER · Joystick más transparente + zoom out móvil
+   - Joystick: base 8% opacidad, thumb 22% opacidad
+   - Móvil: canvas 1.5x más grande internamente → se ve más "alejado"
+   - PC: sin cambios
    ════════════════════════════════════════════════ */
 const canvas=document.getElementById('game');
 const ctx=canvas.getContext('2d');
@@ -135,6 +136,8 @@ syncSoundBtn();
 document.addEventListener('visibilitychange',()=>{ if(!AudioSys.ctx)return; if(document.hidden)AudioSys.ctx.suspend(); else AudioSys.resume(); });
 
 let W=0,H=0,bgGrad=null,shake=0,hurtFlash=0;
+let IS_MOBILE=false;
+const MOBILE_ZOOM=1.5; // ← Factor de zoom out en móvil (1.5 = 50% más "alejado")
 
 // ── NAVE ──
 const SHIP_W=221,SHIP_H=111;
@@ -638,7 +641,7 @@ function resetGame(){score=0;lives=3;wave=0;spawnT=FIRST_WAVE_DELAY;gameState='p
  fidSeq=0;cooldown=0;bombCooldown=0;shake=0;hurtFlash=0;boss=null;bossWarnT=0;AudioSys.bossMode=false;
  force.active=false;force.state='docked';}
 
-// ── JOYSTICK VIRTUAL (solo móvil) ──
+// ── JOYSTICK VIRTUAL (solo móvil, más transparente) ──
 const joystick=document.getElementById('joystick');
 const joystickBase=document.getElementById('joystickBase');
 const joystickThumb=document.getElementById('joystickThumb');
@@ -646,11 +649,11 @@ const JOYSTICK_RADIUS=70;
 const JOYSTICK_DEADZONE=10;
 let joystickActive=false;
 let joystickCenterX=0, joystickCenterY=0;
-let joystickDX=0, joystickDY=0; // vector normalizado -1 a 1
+let joystickDX=0, joystickDY=0;
 
 function initJoystick(){
-  const isMobile=matchMedia('(pointer:coarse)').matches||'ontouchstart' in window;
-  if(!isMobile)return;
+  IS_MOBILE=matchMedia('(pointer:coarse)').matches||'ontouchstart' in window;
+  if(!IS_MOBILE)return;
   joystick.style.display='block';
   const rect=joystick.getBoundingClientRect();
   joystickCenterX=rect.left+rect.width/2;
@@ -687,7 +690,6 @@ function updateJoystick(clientX,clientY){
   const thumbY=Math.sin(angle)*distance;
   joystickThumb.style.transform=`translate(calc(-50% + ${thumbX}px),calc(-50% + ${thumbY}px))`;
   
-  // Normalizar a -1 a 1
   if(distance<JOYSTICK_DEADZONE){
     joystickDX=0;joystickDY=0;
   }else{
@@ -697,7 +699,7 @@ function updateJoystick(clientX,clientY){
 }
 
 // ── CONTROLES ──
-const keys={};let pointer=null,interacted=false,hintAlpha=1,touchFire=false,touchBomb=false,touchForce=false;
+const keys={};let pointer=null,interacted=false,hintAlpha=1,touchFire=false,touchBomb=false;
 addEventListener('keydown',e=>{
  AudioSys.init();AudioSys.resume();
  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','KeyZ','KeyX','KeyC'].includes(e.code))e.preventDefault();
@@ -713,8 +715,7 @@ canvas.addEventListener('pointerup',()=>pointer=null);
 canvas.addEventListener('pointercancel',()=>pointer=null);
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
 const touchControls=document.getElementById('touchControls');
-const isTouch=matchMedia('(pointer:coarse)').matches||'ontouchstart' in window;
-if(isTouch)touchControls.style.display='flex';
+if(IS_MOBILE)touchControls.style.display='flex';
 function bindHoldButton(id,setter){const el=document.getElementById(id);
  el.addEventListener('pointerdown',e=>{AudioSys.init();AudioSys.resume();
   if(gameState==='over'&&id==='btnFire'){resetGame();return;}setter(true);interacted=true;el.setPointerCapture(e.pointerId);e.preventDefault();});
@@ -769,21 +770,28 @@ function updateForce(dt){
 }
 
 function keepShipInside(){ship.x=W>=ship.w?clamp(ship.x,ship.w/2,W-ship.w/2):W/2;ship.y=H>=ship.h?clamp(ship.y,ship.h/2,H-ship.h/2):H/2;}
-function resize(){W=canvas.width=Math.max(1,Math.floor(innerWidth));H=canvas.height=Math.max(1,Math.floor(innerHeight));
- ctx.imageSmoothingEnabled=false;bgGrad=ctx.createLinearGradient(0,0,0,H);bgGrad.addColorStop(0,'#070a14');bgGrad.addColorStop(1,'#0d1226');
- makeStars();keepShipInside();
- // Recalcular centro del joystick al redimensionar
- if(joystick.style.display==='block'){
-  const rect=joystick.getBoundingClientRect();
-  joystickCenterX=rect.left+rect.width/2;
-  joystickCenterY=rect.top+rect.height/2;
- }
+
+// ═══════ RESIZE CON ZOOM OUT EN MÓVIL ═══════
+function resize(){
+  IS_MOBILE=matchMedia('(pointer:coarse)').matches||'ontouchstart' in window;
+  const zoom=IS_MOBILE?MOBILE_ZOOM:1;
+  W=canvas.width=Math.max(1,Math.floor(innerWidth*zoom));
+  H=canvas.height=Math.max(1,Math.floor(innerHeight*zoom));
+  ctx.imageSmoothingEnabled=false;
+  bgGrad=ctx.createLinearGradient(0,0,0,H);
+  bgGrad.addColorStop(0,'#070a14');bgGrad.addColorStop(1,'#0d1226');
+  makeStars();keepShipInside();
+  if(joystick.style.display==='block'){
+    const rect=joystick.getBoundingClientRect();
+    joystickCenterX=rect.left+rect.width/2;
+    joystickCenterY=rect.top+rect.height/2;
+  }
 }
 addEventListener('resize',resize);
 addEventListener('orientationchange',()=>setTimeout(resize,120));
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
 resize();resetGame();
-initJoystick(); // Inicializar joystick si es móvil
+initJoystick();
 
 function enemyShoot(e,angle,speed=150,col){if(enemyBullets.length>=MAX_ENEMY_BULLETS)return;
  enemyBullets.push({x:e.x,y:e.y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,r:6,col:col||'#e04fd0'});}
@@ -952,9 +960,7 @@ function update(dt){
  if(interacted)hintAlpha=Math.max(0,hintAlpha-dt*1.5);
  if(ship.invuln>0)ship.invuln-=dt;
  if(gameState==='play'){
-  // Movimiento: joystick (móvil) o teclado (PC)
   if(joystickActive){
-   // Usar joystick
    ship.x+=joystickDX*ship.speed*dt;
    ship.y+=joystickDY*ship.speed*dt;
   }else if(pointer){
@@ -1174,8 +1180,7 @@ function draw(){
   ctx.font='bold 20px monospace';ctx.fillStyle='#f2f0f5';ctx.fillText('PUNTUACIÓN: '+score,W/2,H/2);
   ctx.font='bold 16px monospace';ctx.fillStyle='#ffd860';ctx.fillText('PULSA Z PARA REINTENTAR',W/2,H/2+44);ctx.textBaseline='top';}
  if(hintAlpha>0&&gameState==='play'){ctx.globalAlpha=hintAlpha*.8;ctx.fillStyle='#8b93a8';ctx.font='14px monospace';ctx.textAlign='center';ctx.textBaseline='bottom';
-  const isMobile=matchMedia('(pointer:coarse)').matches||'ontouchstart' in window;
-  const controls=isMobile?'JOYSTICK IZQ · BOTONES DER':'FLECHAS/WASD · Z/X/C · M';
+  const controls=IS_MOBILE?'JOYSTICK IZQ · BOTONES DER':'FLECHAS/WASD · Z/X/C · M';
   ctx.fillText(controls,W/2,H-40);
   const msg=boss&&boss.type==='machines'?'¡CUIDADO CON LOS ESBIROS!':wave>=E3_START_WAVE?'¡FASE 3: NUEVOS ENEMIGOS!':'OLEADA '+wave+'/'+BOSS_EVERY+' PARA EL JEFE';
   ctx.fillText(msg,W/2,H-22);ctx.globalAlpha=1;}
