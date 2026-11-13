@@ -21,6 +21,10 @@
   #btnBomb { background:rgba(255,140,26,.6); }
   #btnForce { background:rgba(47,157,240,.6); font-size:16px; }
   #touchControls button:active { filter:brightness(1.5); }
+  /* JOYSTICK VIRTUAL */
+  #joystick { position:fixed; left:30px; bottom:30px; width:140px; height:140px; display:none; z-index:20; }
+  #joystickBase { position:absolute; width:140px; height:140px; border-radius:50%; background:rgba(255,255,255,0.15); border:3px solid rgba(255,255,255,0.3); }
+  #joystickThumb { position:absolute; width:60px; height:60px; border-radius:50%; background:rgba(255,255,255,0.5); border:3px solid rgba(255,255,255,0.8); top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; }
 </style>
 </head>
 <body>
@@ -31,13 +35,16 @@
   <button id="btnBomb" aria-label="Lanzar bomba">X</button>
   <button id="btnForce" aria-label="Nave nodriza">C</button>
 </div>
+<div id="joystick">
+  <div id="joystickBase"></div>
+  <div id="joystickThumb"></div>
+</div>
 <script>
 'use strict';
 /* ════════════════════════════════════════════════
-   PIXELMASTER · Esbirros del Jefe Máquinas
-   4 esbirros agresivos que solo aparecen con el jefe
-   Spritesheet: esbirros_jefe_maquinas.png (1590x1124)
-   Celdas: 795x562
+   PIXELMASTER · Joystick virtual fijo (solo móvil)
+   PC: teclado (flechas/WASD)
+   Móvil: joystick izquierdo + botones derechos
    ════════════════════════════════════════════════ */
 const canvas=document.getElementById('game');
 const ctx=canvas.getContext('2d');
@@ -136,7 +143,7 @@ const shipImg=new Image();let shipReady=false;
 shipImg.onload=()=>shipReady=true;
 shipImg.src='nave.png';
 
-// ── SPRITESHEET ENEMIGOS 3 (9 enemigos, celdas 530x530) ──
+// ── SPRITESHEET ENEMIGOS 3 ──
 const E3_IMG=new Image();let e3Ready=false;
 E3_IMG.onload=()=>{e3Ready=true;};
 E3_IMG.src='enemigos3.png';
@@ -152,12 +159,12 @@ function drawE3Enemy(g,type,cx,cy,t){
   g.drawImage(E3_IMG, sx, sy, E3_CELL, E3_CELL, cx-E3_RENDER/2, cy-E3_RENDER/2+bob, E3_RENDER, E3_RENDER);
 }
 
-// ── SPRITESHEET ESBIROS JEFE MÁQUINAS (4 esbirros, celdas 795x562) ──
+// ── SPRITESHEET ESBIROS ──
 const ESB_IMG=new Image();let esbReady=false;
 ESB_IMG.onload=()=>{esbReady=true;};
 ESB_IMG.src='esbirros_jefe_maquinas.png';
 const ESB_CELL_W=795, ESB_CELL_H=562;
-const ESB_RENDER=130; // tamaño de renderizado
+const ESB_RENDER=130;
 function drawEsbirro(g,type,cx,cy,t){
   if(!esbReady)return;
   const idx={esbirro1:0,esbirro2:1,esbirro3:2,esbirro4:3}[type];
@@ -196,7 +203,7 @@ const ENEMY_SCALE=3;
 const BOSS_EVERY=10;
 const FIRST_WAVE_DELAY=3.0;
 const E3_START_WAVE=21;
-const MAX_ESBIROS=4; // máximo esbirros en pantalla
+const MAX_ESBIROS=4;
 
 /* ═══════ SPRITES ENEMIGOS CLÁSICOS ═══════ */
 function drawInvader(g,cx,cy,s,t){var q=mk(g,cx,cy,s),G='#3ddc55',g2='#1f9c38',CY='#35e0e8',f=Math.floor(t*4)%2;
@@ -282,7 +289,6 @@ function drawMechFallback(g,cx,cy,s,t,col){var q=mk(g,cx,cy,s),i;
  ovalD(g,cx,cy-6*s,5*s,5*s,'#3a4468');
  q(-2,-8,1,1,col);q(2,-8,1,1,col);q(-2,-4,4,1,col);}
 
-/* ═══════ ITEM: DROIDE ═══════ */
 function drawDroidItem(g,cx,cy,s,t){
  var q=mk(g,cx,cy,s);
  q(-11,-3,4,15,'#c9c4d4'); q(7,-3,4,15,'#c9c4d4');
@@ -362,7 +368,6 @@ const EDEF={
  abeja:{hp:2,lw:18,lh:18,score:190},
  tanque:{hp:5,lw:24,lh:20,score:380},
  mina:{hp:3,lw:18,lh:18,score:260},
- // Esbirros del jefe máquinas
  esbirro1:{hp:3,lw:24,lh:18,score:350},
  esbirro2:{hp:3,lw:24,lh:18,score:350},
  esbirro3:{hp:4,lw:24,lh:18,score:400},
@@ -396,7 +401,6 @@ function spawnEnemy(type,o={}){
  if(type==='abeja'){e.vx=-160;e.baseY=clamp(y,80,H-80);e.amp=50;}
  if(type==='tanque'){e.vx=-40;e.baseY=clamp(y,100,H-100);e.amp=20;}
  if(type==='mina'){e.vx=-90;e.baseY=clamp(y,80,H-80);e.amp=40;e.mineArmed=true;}
- // Esbirros: comportamiento agresivo
  if(type==='esbirro1'||type==='esbirro2'||type==='esbirro3'||type==='esbirro4'){
   e.vx=-100;e.baseY=clamp(y,80,H-80);e.amp=30;e.fireT=rand(1,2);
  }
@@ -420,11 +424,9 @@ function explodeAt(x,y,scale=1){
 function accountFormation(fid,killed,x,y){const st=formations[fid];if(!st)return;st.left--;if(killed)st.killed++;
  if(st.left===0&&st.killed===st.total){score+=500;popup(x,y-30,'¡FORMACIÓN! +500','#3ddc55');AudioSys.bonus();}}
 
-// ── ITEM FORCE ──
 const forceItems=[];
 function spawnForceItem(x,y){forceItems.push({x,y,t:0});}
 
-// ── OLEADAS ──
 let score=0,lives=3,wave=0,spawnT=FIRST_WAVE_DELAY,gameState='play';
 let boss=null,bossWarnT=0;
 function snake(type,n){const ph=rand(0,6.28),baseY=rand(H*.25,H*.75);
@@ -480,7 +482,6 @@ function nextWave(){
  spawnT=Math.max(3.0,5.6-wave*.08);
 }
 
-// ── JEFES ──
 const BOSS_ORDER_MULT={dragon:1,spider:1,machines:1.25,valefor:1.3,piolin:1.4,perickko:1.5};
 function bossName(t){return t==='dragon'?'¡DRAGÓN!':t==='spider'?'¡ARAÑA REINA!':t==='machines'?'¡JEFE DE LA SALA DE MÁQUINAS!':
  t==='valefor'?'¡VALEFOR Y NANDORS!':t==='piolin'?'¡PIOLIN II!':'¡PERICKKO, LA OVEJA NEGRA!';}
@@ -503,7 +504,7 @@ function spawnBoss(){
   fireT:1.6,spawnT:3,dashT:4,eggT:2.5,dieT:0,flash:0,
   laserT:4,laserState:'none',chargeT:0,fireDur:0,
   baseY:H/2,targetY:H/2,bobSpeed:0.6,bobAmp:0,
-  esbirroT:3.5}; // timer para spawnear esbirros
+  esbirroT:3.5};
  bossWarnT=2.2;shake=Math.max(shake,6);AudioSys.warn();
 }
 function bossScale(){return boss?boss.w/46:1;}
@@ -539,21 +540,15 @@ function updateBossVertical(dt){
  b.y+=(b.targetY-b.y)*lerpFactor;
  b.y=clamp(b.y,b.h/2,H-b.h/2);
 }
-
-/* ═══════ ESBIROS: SPAWN Y COMPORTAMIENTO ═══════ */
 function spawnEsbirro(){
- // Contar esbirros actuales
  let count=0;
  for(const e of enemies){if(e.type.startsWith('esbirro'))count++;}
  if(count>=MAX_ESBIROS)return;
- // Elegir tipo aleatorio
  const types=['esbirro1','esbirro2','esbirro3','esbirro4'];
  const type=types[Math.floor(rand(0,types.length-0.01))];
- // Spawnear cerca del jefe, no muy lejos
  const y=boss.y+rand(-80,80);
  spawnEnemy(type,{x:boss.x-60,y:clamp(y,80,H-80)});
 }
-
 function updateBoss(dt){const b=boss;if(!b)return;b.t+=dt;b.flash=Math.max(0,b.flash-dt);
  const bi=BOSS_IMGS[b.type]; if(bi&&bi.ready)b.h=b.w*bi.aspect;
  if(b.state==='enter'){b.x-=160*dt;if(b.x<=W-b.w/2-30){b.x=W-b.w/2-30;b.state='fight';}return;}
@@ -565,12 +560,11 @@ function updateBoss(dt){const b=boss;if(!b)return;b.t+=dt;b.flash=Math.max(0,b.f
  else{
   updateBossVertical(dt);
   b.fireT-=dt;b.spawnT-=dt;b.dashT-=dt;b.eggT-=dt;
-  // ESBIROS: solo con jefe máquinas
   if(b.type==='machines'&&b.state==='fight'){
    b.esbirroT-=dt;
    if(b.esbirroT<=0){
     spawnEsbirro();
-    b.esbirroT=b.phase===1?4.5:b.phase===2?3.5:2.8; // más frecuente en fases avanzadas
+    b.esbirroT=b.phase===1?4.5:b.phase===2?3.5:2.8;
    }
   }
   if(b.type==='dragon'){
@@ -632,7 +626,6 @@ function updateBoss(dt){const b=boss;if(!b)return;b.t+=dt;b.flash=Math.max(0,b.f
  if(ship.invuln<=0&&Math.abs(b.x-ship.x)<(b.w+ship.w*.55)/2&&Math.abs(b.y-ship.y)<(b.h+ship.h*.4)/2)hitPlayer();
 }
 
-// ── DAÑO / REINICIO ──
 function hitPlayer(){if(ship.invuln>0||gameState!=='play')return;lives--;ship.invuln=2;hurtFlash=.35;
  explodeAt(ship.x,ship.y,2);shake=Math.max(shake,16);AudioSys.hurt();
  if(lives<=0){gameState='over';popup(ship.x,ship.y-40,'¡NAVE DESTRUIDA!','#ff5a66');AudioSys.gameover();}}
@@ -645,8 +638,66 @@ function resetGame(){score=0;lives=3;wave=0;spawnT=FIRST_WAVE_DELAY;gameState='p
  fidSeq=0;cooldown=0;bombCooldown=0;shake=0;hurtFlash=0;boss=null;bossWarnT=0;AudioSys.bossMode=false;
  force.active=false;force.state='docked';}
 
+// ── JOYSTICK VIRTUAL (solo móvil) ──
+const joystick=document.getElementById('joystick');
+const joystickBase=document.getElementById('joystickBase');
+const joystickThumb=document.getElementById('joystickThumb');
+const JOYSTICK_RADIUS=70;
+const JOYSTICK_DEADZONE=10;
+let joystickActive=false;
+let joystickCenterX=0, joystickCenterY=0;
+let joystickDX=0, joystickDY=0; // vector normalizado -1 a 1
+
+function initJoystick(){
+  const isMobile=matchMedia('(pointer:coarse)').matches||'ontouchstart' in window;
+  if(!isMobile)return;
+  joystick.style.display='block';
+  const rect=joystick.getBoundingClientRect();
+  joystickCenterX=rect.left+rect.width/2;
+  joystickCenterY=rect.top+rect.height/2;
+  
+  joystick.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    joystickActive=true;
+    const touch=e.touches[0];
+    updateJoystick(touch.clientX,touch.clientY);
+  },{passive:false});
+  
+  joystick.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    if(!joystickActive)return;
+    const touch=e.touches[0];
+    updateJoystick(touch.clientX,touch.clientY);
+  },{passive:false});
+  
+  joystick.addEventListener('touchend',e=>{
+    e.preventDefault();
+    joystickActive=false;
+    joystickDX=0;joystickDY=0;
+    joystickThumb.style.transform='translate(-50%,-50%)';
+  },{passive:false});
+}
+
+function updateJoystick(clientX,clientY){
+  const dx=clientX-joystickCenterX;
+  const dy=clientY-joystickCenterY;
+  const distance=Math.min(Math.hypot(dx,dy),JOYSTICK_RADIUS);
+  const angle=Math.atan2(dy,dx);
+  const thumbX=Math.cos(angle)*distance;
+  const thumbY=Math.sin(angle)*distance;
+  joystickThumb.style.transform=`translate(calc(-50% + ${thumbX}px),calc(-50% + ${thumbY}px))`;
+  
+  // Normalizar a -1 a 1
+  if(distance<JOYSTICK_DEADZONE){
+    joystickDX=0;joystickDY=0;
+  }else{
+    joystickDX=thumbX/JOYSTICK_RADIUS;
+    joystickDY=thumbY/JOYSTICK_RADIUS;
+  }
+}
+
 // ── CONTROLES ──
-const keys={};let pointer=null,interacted=false,hintAlpha=1,touchFire=false,touchBomb=false;
+const keys={};let pointer=null,interacted=false,hintAlpha=1,touchFire=false,touchBomb=false,touchForce=false;
 addEventListener('keydown',e=>{
  AudioSys.init();AudioSys.resume();
  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','KeyZ','KeyX','KeyC'].includes(e.code))e.preventDefault();
@@ -662,7 +713,7 @@ canvas.addEventListener('pointerup',()=>pointer=null);
 canvas.addEventListener('pointercancel',()=>pointer=null);
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
 const touchControls=document.getElementById('touchControls');
-const isTouch=matchMedia('(pointer:coarse)').matches||'ontouchstart'in window;
+const isTouch=matchMedia('(pointer:coarse)').matches||'ontouchstart' in window;
 if(isTouch)touchControls.style.display='flex';
 function bindHoldButton(id,setter){const el=document.getElementById(id);
  el.addEventListener('pointerdown',e=>{AudioSys.init();AudioSys.resume();
@@ -672,7 +723,6 @@ bindHoldButton('btnFire',v=>touchFire=v);
 bindHoldButton('btnBomb',v=>touchBomb=v);
 bindHoldButton('btnForce',v=>{if(v)toggleForce();});
 
-// ── POD FORCE ──
 function dockX(){ return ship.x + ship.w/2 + 47; }
 function dockY(){ return ship.y + 10; }
 function toggleForce(){
@@ -718,17 +768,23 @@ function updateForce(dt){
  force.shieldFlash=Math.max(0,force.shieldFlash-dt);
 }
 
-// ── PANTALLA ──
 function keepShipInside(){ship.x=W>=ship.w?clamp(ship.x,ship.w/2,W-ship.w/2):W/2;ship.y=H>=ship.h?clamp(ship.y,ship.h/2,H-ship.h/2):H/2;}
 function resize(){W=canvas.width=Math.max(1,Math.floor(innerWidth));H=canvas.height=Math.max(1,Math.floor(innerHeight));
  ctx.imageSmoothingEnabled=false;bgGrad=ctx.createLinearGradient(0,0,0,H);bgGrad.addColorStop(0,'#070a14');bgGrad.addColorStop(1,'#0d1226');
- makeStars();keepShipInside();}
+ makeStars();keepShipInside();
+ // Recalcular centro del joystick al redimensionar
+ if(joystick.style.display==='block'){
+  const rect=joystick.getBoundingClientRect();
+  joystickCenterX=rect.left+rect.width/2;
+  joystickCenterY=rect.top+rect.height/2;
+ }
+}
 addEventListener('resize',resize);
 addEventListener('orientationchange',()=>setTimeout(resize,120));
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
 resize();resetGame();
+initJoystick(); // Inicializar joystick si es móvil
 
-// ── LÓGICA ──
 function enemyShoot(e,angle,speed=150,col){if(enemyBullets.length>=MAX_ENEMY_BULLETS)return;
  enemyBullets.push({x:e.x,y:e.y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,r:6,col:col||'#e04fd0'});}
 function fireFan(e,count,speed,ox=0,oy=0,col){if(enemyBullets.length+count>MAX_ENEMY_BULLETS)return;
@@ -819,33 +875,24 @@ function updateE3Enemies(e,dt){
   }
  }
 }
-
-/* ═══════ ESBIROS: COMPORTAMIENTO AGRESIVO ═══════ */
 function updateEsbirro(e,dt){
  const t=e.t;
- // Persecución suave hacia la nave
  const dx=ship.x-e.x, dy=ship.y-e.y;
  const d=Math.hypot(dx,dy)||1;
- // Velocidad de acercamiento: rápida pero no imposible
  const chaseSpeed=140;
  e.vx+=(dx/d*chaseSpeed-e.vx)*1.8*dt;
  e.vy+=(dy/d*chaseSpeed-e.vy)*1.8*dt;
  e.x+=e.vx*dt;
  e.y+=e.vy*dt;
- // Mantener dentro de la pantalla
  e.y=clamp(e.y,e.h/2,H-e.h/2);
- // Disparo dirigido frecuente
  e.fireT-=dt;
  if(e.fireT<=0&&e.x<W-20&&e.x>50){
-  e.fireT=rand(1.2,2.0); // disparo cada 1.2-2s
-  // Disparo dirigido con pequeña imprecisión
+  e.fireT=rand(1.2,2.0);
   const angle=Math.atan2(ship.y-e.y,ship.x-e.x);
   enemyShoot(e,angle+rand(-0.15,0.15),180,'#ff5a66');
  }
- // Partículas de estela
  if(Math.random()<0.3)addParticle({x:e.x-10,y:e.y,vx:-30,vy:rand(-10,10),t:0,life:.25,col:'#ff8c1a',size:2,grav:0});
 }
-
 function updateEnemies(dt){
  for(let i=enemies.length-1;i>=0;i--){const e=enemies[i];
   if(e.dead){accountFormation(e.fid,true,e.x,e.y);enemies.splice(i,1);continue;}
@@ -878,7 +925,6 @@ function updateEnemies(dt){
   else if(['naveblanca','robot','murcielago','arana','ovni','tiburon','abeja','tanque','mina'].includes(e.type)){
    updateE3Enemies(e,dt);
   }
-  // ESBIROS
   else if(e.type==='esbirro1'||e.type==='esbirro2'||e.type==='esbirro3'||e.type==='esbirro4'){
    updateEsbirro(e,dt);
   }
@@ -906,12 +952,24 @@ function update(dt){
  if(interacted)hintAlpha=Math.max(0,hintAlpha-dt*1.5);
  if(ship.invuln>0)ship.invuln-=dt;
  if(gameState==='play'){
-  if(pointer){ship.x+=(pointer.x-ship.x)*Math.min(1,dt*10);ship.y+=(pointer.y-ship.y)*Math.min(1,dt*10);}
-  else{let dx=0,dy=0;
-   if(keys.ArrowLeft||keys.KeyA)dx--;if(keys.ArrowRight||keys.KeyD)dx++;
-   if(keys.ArrowUp||keys.KeyW)dy--;if(keys.ArrowDown||keys.KeyS)dy++;
+  // Movimiento: joystick (móvil) o teclado (PC)
+  if(joystickActive){
+   // Usar joystick
+   ship.x+=joystickDX*ship.speed*dt;
+   ship.y+=joystickDY*ship.speed*dt;
+  }else if(pointer){
+   ship.x+=(pointer.x-ship.x)*Math.min(1,dt*10);
+   ship.y+=(pointer.y-ship.y)*Math.min(1,dt*10);
+  }else{
+   let dx=0,dy=0;
+   if(keys.ArrowLeft||keys.KeyA)dx--;
+   if(keys.ArrowRight||keys.KeyD)dx++;
+   if(keys.ArrowUp||keys.KeyW)dy--;
+   if(keys.ArrowDown||keys.KeyS)dy++;
    if(dx&&dy){dx*=.707;dy*=.707;}
-   ship.x+=dx*ship.speed*dt;ship.y+=dy*ship.speed*dt;}
+   ship.x+=dx*ship.speed*dt;
+   ship.y+=dy*ship.speed*dt;
+  }
   keepShipInside();
   if(keys.KeyZ||touchFire)shoot();
   if(keys.KeyX||touchBomb)launchBomb();
@@ -964,7 +1022,6 @@ function update(dt){
  for(let i=pops.length-1;i>=0;i--){pops[i].t+=dt;if(pops[i].t>=pops[i].life)pops.splice(i,1);}
 }
 
-// ── DIBUJO ──
 function drawTestShip(){const sx=ship.w/128,sy=ship.h/60;ctx.save();ctx.translate(ship.x,ship.y);ctx.scale(sx,sy);
  ctx.fillStyle='#7fd8ff';ctx.fillRect(-70,-6,18,12);ctx.fillStyle='#f2f0f5';ctx.fillRect(-52,-16,80,32);
  ctx.fillStyle='#e8283c';ctx.beginPath();ctx.moveTo(28,-16);ctx.lineTo(64,0);ctx.lineTo(28,16);ctx.fill();
@@ -1117,7 +1174,9 @@ function draw(){
   ctx.font='bold 20px monospace';ctx.fillStyle='#f2f0f5';ctx.fillText('PUNTUACIÓN: '+score,W/2,H/2);
   ctx.font='bold 16px monospace';ctx.fillStyle='#ffd860';ctx.fillText('PULSA Z PARA REINTENTAR',W/2,H/2+44);ctx.textBaseline='top';}
  if(hintAlpha>0&&gameState==='play'){ctx.globalAlpha=hintAlpha*.8;ctx.fillStyle='#8b93a8';ctx.font='14px monospace';ctx.textAlign='center';ctx.textBaseline='bottom';
-  ctx.fillText('FLECHAS / WASD MOVER · Z DISPARA · X BOMBA · C FORCE · M SONIDO',W/2,H-40);
+  const isMobile=matchMedia('(pointer:coarse)').matches||'ontouchstart' in window;
+  const controls=isMobile?'JOYSTICK IZQ · BOTONES DER':'FLECHAS/WASD · Z/X/C · M';
+  ctx.fillText(controls,W/2,H-40);
   const msg=boss&&boss.type==='machines'?'¡CUIDADO CON LOS ESBIROS!':wave>=E3_START_WAVE?'¡FASE 3: NUEVOS ENEMIGOS!':'OLEADA '+wave+'/'+BOSS_EVERY+' PARA EL JEFE';
   ctx.fillText(msg,W/2,H-22);ctx.globalAlpha=1;}
 }
