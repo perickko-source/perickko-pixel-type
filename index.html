@@ -15,37 +15,137 @@
   #btnSound.off { color:#8b93a8; }
   #btnSound.off .led { background:#5a6178; box-shadow:none; }
   #btnSound:hover { border-color:#35e0e8; }
+  /* PC: controles clásicos */
   #touchControls { position:fixed; right:18px; bottom:18px; display:none; gap:12px; z-index:10; }
   #touchControls button { width:72px; height:72px; border-radius:50%; border:2px solid rgba(255,255,255,.55); color:#fff; font:bold 20px monospace; touch-action:none; -webkit-tap-highlight-color:transparent; }
   #btnFire { background:rgba(232,40,60,.6); }
   #btnBomb { background:rgba(255,140,26,.6); }
   #btnForce { background:rgba(47,157,240,.6); font-size:16px; }
   #touchControls button:active { filter:brightness(1.5); }
-  /* JOYSTICK VIRTUAL - MÁS TRANSPARENTE */
-  #joystick { position:fixed; left:30px; bottom:30px; width:140px; height:140px; display:none; z-index:20; }
-  #joystickBase { position:absolute; width:140px; height:140px; border-radius:50%; background:rgba(255,255,255,0.08); border:2px solid rgba(255,255,255,0.18); }
-  #joystickThumb { position:absolute; width:60px; height:60px; border-radius:50%; background:rgba(255,255,255,0.22); border:2px solid rgba(255,255,255,0.45); top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; }
+  
+  /* ═══════ SKIN CONSOLA PORTÁTIL (solo móvil) ═══════ */
+  #skinContainer {
+    display:none;
+    position:fixed; inset:0; z-index:5;
+    background-image:url('skin2.png');
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+  }
+  /* Área de la pantalla dentro de la skin (ajustar según tu imagen) */
+  #screenArea {
+    position:absolute;
+    left:15%; right:15%; top:6%; bottom:22%;
+    overflow:hidden;
+    border-radius:4px;
+  }
+  #screenArea canvas {
+    width:100% !important;
+    height:100% !important;
+    display:block;
+  }
+  /* Joystick sobre el analógico izquierdo */
+  #skinJoystick {
+    position:absolute;
+    left:6%; bottom:14%;
+    width:18%; aspect-ratio:1;
+    max-width:140px; max-height:140px;
+    z-index:20;
+  }
+  #skinJoystickBase {
+    position:absolute; inset:0;
+    border-radius:50%;
+    background:rgba(255,255,255,0.06);
+    border:2px solid rgba(255,255,255,0.15);
+  }
+  #skinJoystickThumb {
+    position:absolute;
+    width:45%; height:45%;
+    border-radius:50%;
+    background:rgba(255,255,255,0.18);
+    border:2px solid rgba(255,255,255,0.4);
+    top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    pointer-events:none;
+  }
+  /* Botones de acción sobre los físicos (Y,X,B,A) */
+  #skinButtons {
+    position:absolute;
+    right:5%; bottom:14%;
+    width:22%; aspect-ratio:1;
+    max-width:170px; max-height:170px;
+    z-index:20;
+  }
+  .skinBtn {
+    position:absolute;
+    width:38%; height:38%;
+    border-radius:50%;
+    background:rgba(255,255,255,0.10);
+    border:2px solid rgba(255,255,255,0.35);
+    color:#fff;
+    font:bold 18px monospace;
+    display:flex; align-items:center; justify-content:center;
+    touch-action:none;
+    -webkit-tap-highlight-color:transparent;
+    user-select:none;
+  }
+  .skinBtn:active { background:rgba(255,255,255,0.28); transform:scale(0.92); }
+  /* Posiciones en cruz: Y arriba, X izquierda, B derecha, A abajo */
+  #skinBtnY { top:0; left:50%; transform:translateX(-50%); }
+  #skinBtnX { top:50%; left:0; transform:translateY(-50%); }
+  #skinBtnB { top:50%; right:0; transform:translateY(-50%); }
+  #skinBtnA { bottom:0; left:50%; transform:translateX(-50%); }
+  #skinBtnY:active { transform:translateX(-50%) scale(0.92); }
+  #skinBtnX:active { transform:translateY(-50%) scale(0.92); }
+  #skinBtnB:active { transform:translateY(-50%) scale(0.92); }
+  #skinBtnA:active { transform:translateX(-50%) scale(0.92); }
+  
+  /* Etiquetas de función debajo de cada botón */
+  .skinBtnLabel {
+    position:absolute;
+    font:bold 9px monospace;
+    color:rgba(255,255,255,0.5);
+    text-align:center;
+    width:100%;
+    bottom:-14px;
+    left:0;
+    letter-spacing:1px;
+  }
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
 <button id="btnSound" aria-label="Silenciar o activar sonido"><span class="led"></span><span id="sndLabel">SONIDO</span></button>
+
+<!-- PC: controles clásicos -->
 <div id="touchControls">
   <button id="btnFire" aria-label="Disparar">Z</button>
   <button id="btnBomb" aria-label="Lanzar bomba">X</button>
   <button id="btnForce" aria-label="Nave nodriza">C</button>
 </div>
-<div id="joystick">
-  <div id="joystickBase"></div>
-  <div id="joystickThumb"></div>
+
+<!-- MÓVIL: skin consola -->
+<div id="skinContainer">
+  <div id="screenArea"></div>
+  <div id="skinJoystick">
+    <div id="skinJoystickBase"></div>
+    <div id="skinJoystickThumb"></div>
+  </div>
+  <div id="skinButtons">
+    <div class="skinBtn" id="skinBtnY">Y<span class="skinBtnLabel">—</span></div>
+    <div class="skinBtn" id="skinBtnX">X<span class="skinBtnLabel">FORCE</span></div>
+    <div class="skinBtn" id="skinBtnB">B<span class="skinBtnLabel">BOMBA</span></div>
+    <div class="skinBtn" id="skinBtnA">A<span class="skinBtnLabel">DISPARO</span></div>
+  </div>
 </div>
+
 <script>
 'use strict';
 /* ════════════════════════════════════════════════
-   PIXELMASTER · Joystick más transparente + zoom out móvil
-   - Joystick: base 8% opacidad, thumb 22% opacidad
-   - Móvil: canvas 1.5x más grande internamente → se ve más "alejado"
-   - PC: sin cambios
+   PIXELMASTER · Skin consola portátil en móvil
+   - Pantalla: área central de skin2.png
+   - Joystick: sobre analógico izquierdo
+   - A=Disparo(Z) · B=Bomba(X) · X=Force(C) · Y=libre
    ════════════════════════════════════════════════ */
 const canvas=document.getElementById('game');
 const ctx=canvas.getContext('2d');
@@ -137,7 +237,7 @@ document.addEventListener('visibilitychange',()=>{ if(!AudioSys.ctx)return; if(d
 
 let W=0,H=0,bgGrad=null,shake=0,hurtFlash=0;
 let IS_MOBILE=false;
-const MOBILE_ZOOM=1.5; // ← Factor de zoom out en móvil (1.5 = 50% más "alejado")
+const MOBILE_ZOOM=1.5;
 
 // ── NAVE ──
 const SHIP_W=221,SHIP_H=111;
@@ -641,45 +741,90 @@ function resetGame(){score=0;lives=3;wave=0;spawnT=FIRST_WAVE_DELAY;gameState='p
  fidSeq=0;cooldown=0;bombCooldown=0;shake=0;hurtFlash=0;boss=null;bossWarnT=0;AudioSys.bossMode=false;
  force.active=false;force.state='docked';}
 
-// ── JOYSTICK VIRTUAL (solo móvil, más transparente) ──
-const joystick=document.getElementById('joystick');
-const joystickBase=document.getElementById('joystickBase');
-const joystickThumb=document.getElementById('joystickThumb');
-const JOYSTICK_RADIUS=70;
-const JOYSTICK_DEADZONE=10;
+// ═══════ SKIN CONSOLA: DETECCIÓN Y LAYOUT ═══════
+const skinContainer=document.getElementById('skinContainer');
+const screenArea=document.getElementById('screenArea');
+const skinJoystick=document.getElementById('skinJoystick');
+const skinJoystickBase=document.getElementById('skinJoystickBase');
+const skinJoystickThumb=document.getElementById('skinJoystickThumb');
+const skinBtnY=document.getElementById('skinBtnY');
+const skinBtnX=document.getElementById('skinBtnX');
+const skinBtnB=document.getElementById('skinBtnB');
+const skinBtnA=document.getElementById('skinBtnA');
+
+const JOYSTICK_RADIUS=50;
+const JOYSTICK_DEADZONE=8;
 let joystickActive=false;
 let joystickCenterX=0, joystickCenterY=0;
 let joystickDX=0, joystickDY=0;
 
-function initJoystick(){
-  IS_MOBILE=matchMedia('(pointer:coarse)').matches||'ontouchstart' in window;
-  if(!IS_MOBILE)return;
-  joystick.style.display='block';
-  const rect=joystick.getBoundingClientRect();
+function isTouchDevice(){
+  return matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window;
+}
+
+function initSkinLayout(){
+  IS_MOBILE=isTouchDevice();
+  if(IS_MOBILE){
+    // Mostrar skin, ocultar controles PC
+    skinContainer.style.display='block';
+    document.getElementById('touchControls').style.display='none';
+    // Mover canvas dentro del screenArea
+    if(canvas.parentNode!==screenArea){
+      screenArea.appendChild(canvas);
+    }
+    // Calcular centro del joystick
+    updateJoystickCenter();
+    // Bind botones de acción
+    bindSkinButton(skinBtnA, ()=>{ keys.KeyZ=true; setTimeout(()=>{keys.KeyZ=false;},50); });
+    bindSkinButton(skinBtnB, ()=>{ keys.KeyX=true; setTimeout(()=>{keys.KeyX=false;},50); });
+    bindSkinButton(skinBtnX, ()=>{ toggleForce(); });
+    // Y sin uso por ahora
+  }else{
+    skinContainer.style.display='none';
+    document.getElementById('touchControls').style.display='flex';
+    if(canvas.parentNode!==document.body){
+      document.body.appendChild(canvas);
+    }
+  }
+}
+
+function updateJoystickCenter(){
+  const rect=skinJoystick.getBoundingClientRect();
   joystickCenterX=rect.left+rect.width/2;
   joystickCenterY=rect.top+rect.height/2;
-  
-  joystick.addEventListener('touchstart',e=>{
-    e.preventDefault();
-    joystickActive=true;
-    const touch=e.touches[0];
-    updateJoystick(touch.clientX,touch.clientY);
-  },{passive:false});
-  
-  joystick.addEventListener('touchmove',e=>{
-    e.preventDefault();
-    if(!joystickActive)return;
-    const touch=e.touches[0];
-    updateJoystick(touch.clientX,touch.clientY);
-  },{passive:false});
-  
-  joystick.addEventListener('touchend',e=>{
-    e.preventDefault();
-    joystickActive=false;
-    joystickDX=0;joystickDY=0;
-    joystickThumb.style.transform='translate(-50%,-50%)';
-  },{passive:false});
 }
+
+function bindSkinButton(el, onDown){
+  el.addEventListener('touchstart',e=>{
+    e.preventDefault(); e.stopPropagation();
+    AudioSys.init(); AudioSys.resume();
+    onDown();
+  },{passive:false});
+  el.addEventListener('pointerdown',e=>{
+    e.stopPropagation();
+    AudioSys.init(); AudioSys.resume();
+  });
+}
+
+// Eventos del joystick de la skin
+skinJoystick.addEventListener('touchstart',e=>{
+  e.preventDefault(); e.stopPropagation();
+  joystickActive=true;
+  const touch=e.touches[0];
+  updateJoystick(touch.clientX,touch.clientY);
+},{passive:false});
+skinJoystick.addEventListener('touchmove',e=>{
+  e.preventDefault(); e.stopPropagation();
+  if(!joystickActive)return;
+  const touch=e.touches[0];
+  updateJoystick(touch.clientX,touch.clientY);
+},{passive:false});
+skinJoystick.addEventListener('touchend',e=>{
+  e.preventDefault(); e.stopPropagation();
+  joystickActive=false;
+  joystickDX=0;joystickDY=0;
+  skinJoystickThumb.style.transform='translate(-50%,-50%)';
+},{passive:false});
 
 function updateJoystick(clientX,clientY){
   const dx=clientX-joystickCenterX;
@@ -688,8 +833,7 @@ function updateJoystick(clientX,clientY){
   const angle=Math.atan2(dy,dx);
   const thumbX=Math.cos(angle)*distance;
   const thumbY=Math.sin(angle)*distance;
-  joystickThumb.style.transform=`translate(calc(-50% + ${thumbX}px),calc(-50% + ${thumbY}px))`;
-  
+  skinJoystickThumb.style.transform=`translate(calc(-50% + ${thumbX}px),calc(-50% + ${thumbY}px))`;
   if(distance<JOYSTICK_DEADZONE){
     joystickDX=0;joystickDY=0;
   }else{
@@ -698,7 +842,7 @@ function updateJoystick(clientX,clientY){
   }
 }
 
-// ── CONTROLES ──
+// ── CONTROLES PC ──
 const keys={};let pointer=null,interacted=false,hintAlpha=1,touchFire=false,touchBomb=false;
 addEventListener('keydown',e=>{
  AudioSys.init();AudioSys.resume();
@@ -714,15 +858,18 @@ canvas.addEventListener('pointermove',e=>{if(pointer)pointer=toCanvas(e);});
 canvas.addEventListener('pointerup',()=>pointer=null);
 canvas.addEventListener('pointercancel',()=>pointer=null);
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
+
 const touchControls=document.getElementById('touchControls');
-if(IS_MOBILE)touchControls.style.display='flex';
-function bindHoldButton(id,setter){const el=document.getElementById(id);
- el.addEventListener('pointerdown',e=>{AudioSys.init();AudioSys.resume();
-  if(gameState==='over'&&id==='btnFire'){resetGame();return;}setter(true);interacted=true;el.setPointerCapture(e.pointerId);e.preventDefault();});
- el.addEventListener('pointerup',()=>setter(false));el.addEventListener('pointercancel',()=>setter(false));el.addEventListener('pointerleave',()=>setter(false));}
-bindHoldButton('btnFire',v=>touchFire=v);
-bindHoldButton('btnBomb',v=>touchBomb=v);
-bindHoldButton('btnForce',v=>{if(v)toggleForce();});
+if(!IS_MOBILE){
+  touchControls.style.display='flex';
+  function bindHoldButton(id,setter){const el=document.getElementById(id);
+   el.addEventListener('pointerdown',e=>{AudioSys.init();AudioSys.resume();
+    if(gameState==='over'&&id==='btnFire'){resetGame();return;}setter(true);interacted=true;el.setPointerCapture(e.pointerId);e.preventDefault();});
+   el.addEventListener('pointerup',()=>setter(false));el.addEventListener('pointercancel',()=>setter(false));el.addEventListener('pointerleave',()=>setter(false));}
+  bindHoldButton('btnFire',v=>touchFire=v);
+  bindHoldButton('btnBomb',v=>touchBomb=v);
+  bindHoldButton('btnForce',v=>{if(v)toggleForce();});
+}
 
 function dockX(){ return ship.x + ship.w/2 + 47; }
 function dockY(){ return ship.y + 10; }
@@ -771,9 +918,9 @@ function updateForce(dt){
 
 function keepShipInside(){ship.x=W>=ship.w?clamp(ship.x,ship.w/2,W-ship.w/2):W/2;ship.y=H>=ship.h?clamp(ship.y,ship.h/2,H-ship.h/2):H/2;}
 
-// ═══════ RESIZE CON ZOOM OUT EN MÓVIL ═══════
+// ═══════ RESIZE ═══════
 function resize(){
-  IS_MOBILE=matchMedia('(pointer:coarse)').matches||'ontouchstart' in window;
+  IS_MOBILE=isTouchDevice();
   const zoom=IS_MOBILE?MOBILE_ZOOM:1;
   W=canvas.width=Math.max(1,Math.floor(innerWidth*zoom));
   H=canvas.height=Math.max(1,Math.floor(innerHeight*zoom));
@@ -781,17 +928,16 @@ function resize(){
   bgGrad=ctx.createLinearGradient(0,0,0,H);
   bgGrad.addColorStop(0,'#070a14');bgGrad.addColorStop(1,'#0d1226');
   makeStars();keepShipInside();
-  if(joystick.style.display==='block'){
-    const rect=joystick.getBoundingClientRect();
-    joystickCenterX=rect.left+rect.width/2;
-    joystickCenterY=rect.top+rect.height/2;
-  }
+  if(IS_MOBILE) updateJoystickCenter();
 }
 addEventListener('resize',resize);
 addEventListener('orientationchange',()=>setTimeout(resize,120));
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
-resize();resetGame();
-initJoystick();
+
+// Inicializar layout ANTES de resize
+initSkinLayout();
+resize();
+resetGame();
 
 function enemyShoot(e,angle,speed=150,col){if(enemyBullets.length>=MAX_ENEMY_BULLETS)return;
  enemyBullets.push({x:e.x,y:e.y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,r:6,col:col||'#e04fd0'});}
@@ -1180,7 +1326,7 @@ function draw(){
   ctx.font='bold 20px monospace';ctx.fillStyle='#f2f0f5';ctx.fillText('PUNTUACIÓN: '+score,W/2,H/2);
   ctx.font='bold 16px monospace';ctx.fillStyle='#ffd860';ctx.fillText('PULSA Z PARA REINTENTAR',W/2,H/2+44);ctx.textBaseline='top';}
  if(hintAlpha>0&&gameState==='play'){ctx.globalAlpha=hintAlpha*.8;ctx.fillStyle='#8b93a8';ctx.font='14px monospace';ctx.textAlign='center';ctx.textBaseline='bottom';
-  const controls=IS_MOBILE?'JOYSTICK IZQ · BOTONES DER':'FLECHAS/WASD · Z/X/C · M';
+  const controls=IS_MOBILE?'JOYSTIC · A DISPARO · B BOMBA · X FORCE':'FLECHAS/WASD · Z/X/C · M';
   ctx.fillText(controls,W/2,H-40);
   const msg=boss&&boss.type==='machines'?'¡CUIDADO CON LOS ESBIROS!':wave>=E3_START_WAVE?'¡FASE 3: NUEVOS ENEMIGOS!':'OLEADA '+wave+'/'+BOSS_EVERY+' PARA EL JEFE';
   ctx.fillText(msg,W/2,H-22);ctx.globalAlpha=1;}
