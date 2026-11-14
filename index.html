@@ -65,7 +65,6 @@
   #cal input{width:100%;}
   #cal b{color:#ffd860;}
 
-  /* ═══════ OVERLAY INICIAL (solo móvil) ═══════ */
   #startOverlay{
     display:none;
     position:fixed;inset:0;z-index:100;
@@ -116,7 +115,6 @@
     text-align:center;
   }
 
-  /* ═══════ OVERLAY DE GIRO (solo móvil, solo vertical) ═══════ */
   #rotateOverlay{
     display:none;
     position:fixed;inset:0;z-index:110;
@@ -165,7 +163,6 @@
 
 <div id="cal"></div>
 
-<!-- OVERLAY INICIAL (solo móvil) -->
 <div id="startOverlay">
   <div class="logo">PIXEL-TYPE</div>
   <div class="subtitle">ENTRE PÍXELES ANDA EL JUEGO</div>
@@ -173,7 +170,6 @@
   <div class="hint">SE RECOMIENDA JUGAR EN HORIZONTAL</div>
 </div>
 
-<!-- OVERLAY DE GIRO (solo móvil, solo vertical) -->
 <div id="rotateOverlay">
   <div class="icon">📱</div>
   <div class="text">GIRA EL DISPOSITIVO</div>
@@ -253,7 +249,6 @@ let W=0,H=0,bgGrad=null,shake=0,hurtFlash=0;
 const IS_TOUCH=matchMedia('(pointer:coarse)').matches||'ontouchstart' in window;
 const MOBILE_ZOOM=1.8;
 
-/* ═══════ CONTROL DE INICIO MÓVIL ═══════ */
 let mobileStarted=false;
 const startOverlay=document.getElementById('startOverlay');
 const rotateOverlay=document.getElementById('rotateOverlay');
@@ -268,13 +263,11 @@ if(IS_TOUCH){
 
 startBtn.addEventListener('click',async()=>{
   AudioSys.init();AudioSys.resume();
-  // Intentar fullscreen
   try{
     const el=document.documentElement;
     if(el.requestFullscreen)await el.requestFullscreen();
     else if(el.webkitRequestFullscreen)el.webkitRequestFullscreen();
   }catch(e){}
-  // Intentar orientation lock
   try{
     if(screen.orientation&&screen.orientation.lock){
       await screen.orientation.lock('landscape');
@@ -308,6 +301,19 @@ function drawE3Enemy(g,type,cx,cy,t){
   const col=idx%3,row=Math.floor(idx/3),bob=Math.sin(t*3+idx)*2;
   g.drawImage(E3_IMG,col*E3_CELL,row*E3_CELL,E3_CELL,E3_CELL,cx-E3_RENDER/2,cy-E3_RENDER/2+bob,E3_RENDER,E3_RENDER);
 }
+
+// ═══════ ENEMIGOS 4 ═══════
+const E4_IMG=new Image();let e4Ready=false;
+E4_IMG.onload=()=>{e4Ready=true;}; E4_IMG.src='enemigos4.png';
+const E4_CELL=530, E4_RENDER=115;
+function drawE4Enemy(g,type,cx,cy,t){
+  if(!e4Ready)return;
+  const idx={e4_0:0,e4_1:1,e4_2:2,e4_3:3,e4_4:4,e4_5:5,e4_6:6,e4_7:7,e4_8:8}[type];
+  if(idx===undefined)return;
+  const col=idx%3,row=Math.floor(idx/3),bob=Math.sin(t*3+idx)*2;
+  g.drawImage(E4_IMG,col*E4_CELL,row*E4_CELL,E4_CELL,E4_CELL,cx-E4_RENDER/2,cy-E4_RENDER/2+bob,E4_RENDER,E4_RENDER);
+}
+
 const ESB_IMG=new Image();let esbReady=false;
 ESB_IMG.onload=()=>{esbReady=true;}; ESB_IMG.src='esbirros_jefe_maquinas.png';
 const ESB_CW=795,ESB_CH=562,ESB_RENDER=130;
@@ -329,7 +335,8 @@ const BOSS_IMGS={machines:makeBossImg('jefe_maquinas.png'),valefor:makeBossImg('
   piolin:makeBossImg('jefe_piolin.png'),perickko:makeBossImg('jefe_perickko.png')};
 
 const SAFE_GAP=SHIP_H+60, MAX_ENEMY_BULLETS=28, MAX_PELLETS=48, ENEMY_SCALE=3;
-const BOSS_EVERY=10, FIRST_WAVE_DELAY=3.0, E3_START_WAVE=21, MAX_ESBIROS=4;
+const BOSS_EVERY=10, FIRST_WAVE_DELAY=3.0, E3_START_WAVE=21, E4_START_WAVE=31;
+const MAX_ESBIROS_MACHINES=4, MAX_ESBIROS_VALEFOR=3;
 
 function drawInvader(g,cx,cy,s,t){var q=mk(g,cx,cy,s),G='#3ddc55',g2='#1f9c38',CY='#35e0e8',f=Math.floor(t*4)%2;
  q(-6,-8,2,2,G);q(4,-8,2,2,G);q(-4,-6,2,2,G);q(2,-6,2,2,G);q(-5,-4,10,2,G);
@@ -452,7 +459,12 @@ const EDEF={
  arana:{hp:4,lw:20,lh:20,score:320},ovni:{hp:2,lw:22,lh:14,score:220},tiburon:{hp:2,lw:24,lh:16,score:200},
  abeja:{hp:2,lw:18,lh:18,score:190},tanque:{hp:5,lw:24,lh:20,score:380},mina:{hp:3,lw:18,lh:18,score:260},
  esbirro1:{hp:3,lw:24,lh:18,score:350},esbirro2:{hp:3,lw:24,lh:18,score:350},
- esbirro3:{hp:4,lw:24,lh:18,score:400},esbirro4:{hp:3,lw:24,lh:18,score:350}
+ esbirro3:{hp:4,lw:24,lh:18,score:400},esbirro4:{hp:3,lw:24,lh:18,score:350},
+ // ENEMIGOS 4 (oleada 31+, +15% agresividad, +50 score)
+ e4_0:{hp:3,lw:22,lh:18,score:230},e4_1:{hp:4,lw:22,lh:20,score:330},e4_2:{hp:3,lw:24,lh:16,score:270},
+ e4_3:{hp:5,lw:22,lh:20,score:370},e4_4:{hp:4,lw:22,lh:18,score:270},e4_5:{hp:3,lw:26,lh:18,score:250},
+ e4_6:{hp:3,lw:24,lh:18,score:320},e4_7:{hp:4,lw:24,lh:18,score:320},e4_8:{hp:3,lw:24,lh:16,score:270},
+ valefor_esbirro:{hp:3,lw:22,lh:18,score:280}
 };
 function later(t,fn){pending.push({t,fn});}
 function spawnEnemy(type,o={}){
@@ -481,6 +493,18 @@ function spawnEnemy(type,o={}){
  if(type==='tanque'){e.vx=-40;e.baseY=clamp(y,100,H-100);e.amp=20;}
  if(type==='mina'){e.vx=-90;e.baseY=clamp(y,80,H-80);e.amp=40;e.mineArmed=true;}
  if(type.startsWith('esbirro')){e.vx=-100;e.baseY=clamp(y,80,H-80);e.amp=30;e.fireT=rand(1,2);}
+ // ENEMIGOS 4: +15% velocidad, más agresivos
+ if(type.startsWith('e4_')){
+  const idx=parseInt(type.split('_')[1]);
+  const speedMult=1.15;
+  e.vx=-130*speedMult;
+  e.baseY=clamp(y,80,H-80);
+  e.amp=40;
+  e.fireT=rand(1.0,1.8);  // -20% cooldown
+ }
+ if(type==='valefor_esbirro'){
+  e.vx=-120;e.baseY=clamp(y,80,H-80);e.amp=35;e.fireT=rand(1.2,2.0);
+ }
  enemies.push(e);return e;
 }
 function spark(x,y,col,n){for(let i=0;i<n;i++)addParticle({x,y,vx:rand(-90,90),vy:rand(-90,90),t:0,life:rand(.15,.3),col,size:3,grav:0});}
@@ -515,15 +539,28 @@ function e3Mixed(n){const types=['naveblanca','robot','murcielago','arana','ovni
  for(let i=0;i<n;i++){const t=types[Math.floor(rand(0,types.length-0.01))];later(i*.6,()=>spawnEnemy(t));}}
 function e3Formation(type,n){const baseY=rand(H*.25,H*.75);
  for(let i=0;i<n;i++)later(i*.4,()=>spawnEnemy(type,{y:baseY}));}
+// ═══════ ENEMIGOS 4 ═══════
+function e4Mixed(n){const types=['e4_0','e4_1','e4_2','e4_3','e4_4','e4_5','e4_6','e4_7','e4_8'];
+ for(let i=0;i<n;i++){const t=types[Math.floor(rand(0,types.length-0.01))];later(i*.5,()=>spawnEnemy(t));}}
+function e4Formation(type,n){const baseY=rand(H*.25,H*.75);
+ for(let i=0;i<n;i++)later(i*.35,()=>spawnEnemy(type,{y:baseY}));}
 function nextWave(){
  wave++;
  if(wave%BOSS_EVERY===0){spawnBoss();return;}
- if(wave>=E3_START_WAVE){
+ if(wave>=E4_START_WAVE){
+  // Oleada 31+: enemigos4
+  const p=[()=>e4Mixed(6),()=>e4Formation('e4_0',4),()=>e4Formation('e4_1',3),()=>e4Formation('e4_2',4),
+   ()=>e4Formation('e4_3',3),()=>e4Formation('e4_4',3),()=>e4Formation('e4_5',4),()=>e4Formation('e4_6',4),
+   ()=>e4Formation('e4_7',3),()=>e4Formation('e4_8',4),()=>{e4Mixed(4);e3Mixed(2);},()=>{e4Mixed(4);snake('invader',3);}];
+  p[(wave-E4_START_WAVE)%p.length]();
+ }else if(wave>=E3_START_WAVE){
+  // Oleada 21-30: enemigos3
   const p=[()=>e3Mixed(5),()=>e3Formation('naveblanca',4),()=>e3Formation('robot',3),()=>e3Formation('murcielago',4),
    ()=>e3Formation('arana',3),()=>e3Formation('ovni',3),()=>e3Formation('tiburon',4),()=>e3Formation('abeja',4),
    ()=>e3Formation('tanque',2),()=>e3Formation('mina',3),()=>{e3Mixed(3);many('pacman',2);},()=>{e3Mixed(3);snake('invader',3);}];
   p[(wave-E3_START_WAVE)%p.length]();
  }else{
+  // Oleada 1-20: clásicos
   const p=[()=>snake('invader',4),()=>vFormation(4),()=>jellyLine(),()=>many('ghost',2),
    ()=>many('pacman',2),()=>many('galaxian',3),()=>many('octopus',2)];
   p[(wave-1)%p.length]();
@@ -548,6 +585,14 @@ function spawnBoss(){
  boss={type,x:W+bw,y:H/2,w:bw,h:bi?bw*bi.aspect:bw*28/46,hp:maxHp,maxHp,t:0,phase:1,state:'enter',
   fireT:1.6,spawnT:3,dashT:4,eggT:2.5,dieT:0,flash:0,laserT:4,laserState:'none',chargeT:0,fireDur:0,
   targetY:H/2,bobSpeed:0.6,bobAmp:0,esbirroT:3.5};
+ // Esbirros de Valefor: 3 tipos aleatorios de enemigos4
+ if(type==='valefor'){
+  const e4types=['e4_0','e4_1','e4_2','e4_3','e4_4','e4_5','e4_6','e4_7','e4_8'];
+  boss.valeforEsbirros=[];
+  for(let i=0;i<3;i++){
+   boss.valeforEsbirros.push(e4types[Math.floor(rand(0,e4types.length-0.01))]);
+  }
+ }
  bossWarnT=2.2;shake=Math.max(shake,6);AudioSys.warn();}
 function bossScale(){return boss?boss.w/46:1;}
 function bossWeak(){const sc=bossScale();return{x:boss.x-8*sc,y:boss.y-4*sc,r:5*sc};}
@@ -572,11 +617,17 @@ function updateBossVertical(dt){const b=boss;if(!b)return;
  else if(b.state==='fight'){b.bobAmp=H/2-b.h/2-20;b.targetY=H/2+Math.sin(b.t*b.bobSpeed)*b.bobAmp;}
  else b.targetY=b.y;
  b.y+=(b.targetY-b.y)*Math.min(1,dt*4);b.y=clamp(b.y,b.h/2,H-b.h/2);}
-function spawnEsbirro(){
+function spawnEsbirroMachines(){
  let count=0;for(const e of enemies)if(e.type.startsWith('esbirro'))count++;
- if(count>=MAX_ESBIROS)return;
+ if(count>=MAX_ESBIROS_MACHINES)return;
  const types=['esbirro1','esbirro2','esbirro3','esbirro4'];
  spawnEnemy(types[Math.floor(rand(0,3.99))],{x:boss.x-60,y:clamp(boss.y+rand(-80,80),80,H-80)});}
+function spawnEsbirroValefor(){
+ let count=0;for(const e of enemies)if(e.type==='valefor_esbirro')count++;
+ if(count>=MAX_ESBIROS_VALEFOR)return;
+ if(!boss.valeforEsbirros||boss.valeforEsbirros.length===0)return;
+ const type=boss.valeforEsbirros[Math.floor(rand(0,boss.valeforEsbirros.length))];
+ spawnEnemy('valefor_esbirro',{x:boss.x-60,y:clamp(boss.y+rand(-80,80),80,H-80),esbirroType:type});}
 function updateBoss(dt){const b=boss;if(!b)return;b.t+=dt;b.flash=Math.max(0,b.flash-dt);
  const bi=BOSS_IMGS[b.type];if(bi&&bi.ready)b.h=b.w*bi.aspect;
  if(b.state==='enter'){b.x-=160*dt;if(b.x<=W-b.w/2-30){b.x=W-b.w/2-30;b.state='fight';}return;}
@@ -588,9 +639,10 @@ function updateBoss(dt){const b=boss;if(!b)return;b.t+=dt;b.flash=Math.max(0,b.f
  else{
   updateBossVertical(dt);
   b.fireT-=dt;b.spawnT-=dt;b.dashT-=dt;b.eggT-=dt;
-  if(b.type==='machines'){
+  // Esbirros de máquinas
+  if(b.type==='machines'&&b.state==='fight'){
    b.esbirroT-=dt;
-   if(b.esbirroT<=0){spawnEsbirro();b.esbirroT=b.phase===1?4.5:b.phase===2?3.5:2.8;}
+   if(b.esbirroT<=0){spawnEsbirroMachines();b.esbirroT=b.phase===1?4.5:b.phase===2?3.5:2.8;}
    if(Math.random()<0.12)addParticle({x:b.x-b.w*0.4,y:b.y-b.h*0.3,vx:-40,vy:-30,t:0,life:.5,col:'#8b93a8',size:4,grav:0});
    b.laserT-=dt;
    if(b.laserState==='charge'){b.chargeT-=dt;
@@ -605,7 +657,17 @@ function updateBoss(dt){const b=boss;if(!b)return;b.t+=dt;b.flash=Math.max(0,b.f
     if(b.phase===1){fireFan(b,3,160,-b.w*0.4,-b.h*0.3,'#ff8c1a');b.fireT=2.1;}
     else if(b.phase===2){for(let k=0;k<8;k++)enemyShoot(b,k*Math.PI/4+b.t*0.3,140,'#8b93a8');b.fireT=2.3;}
     else{bossWall('#ff8c1a');b.fireT=2.4;}}
-  }else if(b.type==='dragon'){
+  }
+  // Esbirros de Valefor
+  else if(b.type==='valefor'&&b.state==='fight'){
+   b.esbirroT-=dt;
+   if(b.esbirroT<=0){spawnEsbirroValefor();b.esbirroT=b.phase===1?5.0:b.phase===2?4.0:3.0;}
+   if(b.fireT<=0){
+    if(b.phase===1){fireFan(b,2,160,-b.w*0.3,-b.h*0.35,'#e04fd0');fireFan(b,2,160,-b.w*0.3,b.h*0.35,'#e04fd0');b.fireT=2.0;}
+    else if(b.phase===2){for(let k=0;k<6;k++)enemyShoot(b,k*Math.PI/3+b.t*0.4,150,'#e04fd0');b.fireT=2.2;}
+    else{bossWall('#e04fd0');b.fireT=2.4;}}
+  }
+  else if(b.type==='dragon'){
    if(b.fireT<=0){
     if(b.phase===1){fireFan(b,3,150,-b.w/2,0,'#ff8c1a');b.fireT=2.0;}
     else if(b.phase===2){bossWall('#ff8c1a');b.fireT=2.6;if(b.spawnT<=0){spawnEnemy('invader',{x:b.x-b.w/2,y:b.y-60});b.spawnT=4;}}
@@ -617,11 +679,6 @@ function updateBoss(dt){const b=boss;if(!b)return;b.t+=dt;b.flash=Math.max(0,b.f
     else{bossWall('#f2f0f5');b.fireT=2.4;}}
    if(b.eggT<=0){b.eggT=b.phase===1?3.2:b.phase===2?2.4:2.0;
     const n=b.phase===1?1:2;for(let k=0;k<n;k++)spawnEgg(b.x+b.w*0.2+rand(0,20),b.y+rand(-20,20));}
-  }else if(b.type==='valefor'){
-   if(b.fireT<=0){
-    if(b.phase===1){fireFan(b,2,160,-b.w*0.3,-b.h*0.35,'#e04fd0');fireFan(b,2,160,-b.w*0.3,b.h*0.35,'#e04fd0');b.fireT=2.0;}
-    else if(b.phase===2){for(let k=0;k<6;k++)enemyShoot(b,k*Math.PI/3+b.t*0.4,150,'#e04fd0');b.fireT=2.2;}
-    else{bossWall('#e04fd0');b.fireT=2.4;}}
   }else if(b.type==='piolin'){
    if(b.fireT<=0){
     if(b.phase===1){const a=Math.atan2(ship.y-b.y,ship.x-b.x);for(let k=-1;k<=1;k++)enemyShoot(b,a+k*0.12,260,'#ffd860');b.fireT=1.6;}
@@ -791,7 +848,6 @@ addEventListener('resize',layout);
 addEventListener('orientationchange',()=>setTimeout(layout,150));
 if(window.visualViewport)visualViewport.addEventListener('resize',layout);
 
-// En móvil NO llamamos a layout() ni resetGame() todavía: esperamos al botón JUGAR
 if(!IS_TOUCH){layout();resetGame();}
 
 function enemyShoot(e,angle,speed=150,col){if(enemyBullets.length>=MAX_ENEMY_BULLETS)return;
@@ -833,6 +889,75 @@ function updateE3Enemies(e,dt){
  else if(e.type==='mina'){e.x+=e.vx*dt;e.y=e.baseY+Math.sin(t*2+e.ph)*e.amp;
   if(e.mineArmed&&dist(e.x,e.y,ship.x,ship.y)<80){explodeAt(e.x,e.y,1.5);if(ship.invuln<=0)hitPlayer();e.dead=true;e.hp=0;}}
 }
+// ═══════ ENEMIGOS 4: comportamiento más agresivo ═══════
+function updateE4Enemies(e,dt){
+ const t=e.t;
+ const speedMult=1.15;
+ const fireRateMult=0.8;
+ const bulletSpeedMult=1.1;
+ if(e.type==='e4_0'){
+  e.x+=e.vx*speedMult*dt;e.y=e.baseY+Math.sin(t*4+e.ph)*e.amp;
+  e.fireT-=dt*fireRateMult;
+  if(e.fireT<=0&&e.x<W-10&&e.x>ship.x+40){
+   e.fireT=rand(1.8,2.5);
+   enemyShoot(e,Math.atan2(ship.y-e.y,ship.x-e.x),180*bulletSpeedMult,'#e04fd0');
+  }
+ }else if(e.type==='e4_1'){
+  e.x+=e.vx*speedMult*dt;e.y=e.baseY+Math.sin(t*2.5)*e.amp;
+  e.fireT-=dt*fireRateMult;
+  if(e.fireT<=0&&e.x<W-10){
+   e.fireT=3.0;
+   for(let k=0;k<4;k++)enemyShoot(e,t*.5+k*Math.PI/2,140*bulletSpeedMult,'#ff5a66');
+  }
+ }else if(e.type==='e4_2'){
+  const dx=ship.x-e.x,dy=ship.y-e.y,d=Math.hypot(dx,dy)||1;
+  e.vx+=(dx/d*300-e.vx)*2.8*dt;e.vy+=(dy/d*300-e.vy)*2.8*dt;
+  e.x+=e.vx*dt;e.y+=e.vy*dt;
+  if(Math.random()<.5)addParticle({x:e.x+10,y:e.y,vx:50,vy:rand(-20,20),t:0,life:.3,col:'#e04fd0',size:3,grav:0});
+ }else if(e.type==='e4_3'){
+  e.x+=e.vx*speedMult*dt;
+  e.fireT-=dt*fireRateMult;
+  if(e.fireT<=0&&e.x<W-30&&e.x>30){
+   e.fireT=3.5;
+   for(let k=0;k<6;k++)enemyShoot(e,e.t*.3+k*Math.PI/3,130*bulletSpeedMult,'#ff8c1a');
+  }
+ }else if(e.type==='e4_4'){
+  e.x+=e.vx*speedMult*dt;e.y=e.baseY+Math.sin(t*3.5)*10;
+  e.bombT-=dt*fireRateMult;
+  if(e.bombT<=0&&e.x<W-20&&e.x>ship.x){
+   e.bombT=1.3;
+   if(enemyBullets.length<MAX_ENEMY_BULLETS)enemyBullets.push({x:e.x,y:e.y+e.h/2,vx:-60,vy:220,r:8,col:'#ffd860'});
+  }
+ }else if(e.type==='e4_5'){
+  e.x+=e.vx*speedMult*dt;e.y=e.baseY+Math.sin(t*2.5)*15;
+  if(e.x<ship.x+60&&e.x>ship.x-60&&e.fireT>2){
+   e.fireT=0;
+   enemyShoot(e,Math.atan2(ship.y-e.y,ship.x-e.x),220*bulletSpeedMult,'#ff5a66');
+  }
+  e.fireT-=dt*fireRateMult;
+ }else if(e.type==='e4_6'){
+  e.x+=e.vx*speedMult*dt;e.y=e.baseY+Math.sin(t*5.5+e.ph)*e.amp;
+  e.fireT-=dt*fireRateMult;
+  if(e.fireT<=0&&e.x<W-10){
+   e.fireT=rand(1.2,2.0);
+   for(let k=0;k<3;k++)later(k*0.12,()=>{if(!e.dead)enemyShoot(e,Math.atan2(ship.y-e.y,ship.x-e.x)+rand(-.15,.15),170*bulletSpeedMult,'#ffd860');});
+  }
+ }else if(e.type==='e4_7'){
+  e.x+=e.vx*speedMult*dt;e.y=e.baseY+Math.sin(t*1.5)*e.amp;
+  e.fireT-=dt*fireRateMult;
+  if(e.fireT<=0&&e.x<W-30){
+   e.fireT=2.8;
+   enemyShoot(e,Math.atan2(ship.y-e.y,ship.x-e.x),100*bulletSpeedMult,'#ff8c1a');
+  }
+ }else if(e.type==='e4_8'){
+  e.x+=e.vx*speedMult*dt;e.y=e.baseY+Math.sin(t*2.5+e.ph)*e.amp;
+  if(e.mineArmed&&dist(e.x,e.y,ship.x,ship.y)<90){
+   explodeAt(e.x,e.y,1.8);
+   if(ship.invuln<=0)hitPlayer();
+   e.dead=true;e.hp=0;
+  }
+ }
+}
 function updateEsbirro(e,dt){
  const dx=ship.x-e.x,dy=ship.y-e.y,d=Math.hypot(dx,dy)||1;
  e.vx+=(dx/d*140-e.vx)*1.8*dt;e.vy+=(dy/d*140-e.vy)*1.8*dt;
@@ -869,6 +994,14 @@ function updateEnemies(dt){
    if(e.criaT<=0&&e.x<W-40){e.criaT=3;spawnEnemy('cria',{x:e.x,y:e.y+e.h/2});}}
   else if(e.type==='cria'){e.x+=e.vx*dt;e.y+=e.vy*dt;if(e.y>H+40){enemies.splice(i,1);continue;}}
   else if(e.type.startsWith('esbirro'))updateEsbirro(e,dt);
+  else if(e.type==='valefor_esbirro'){
+   // Usar el tipo de esbirro asignado
+   const esbirroType=e.esbirroType||'e4_0';
+   const fakeE={...e,type:esbirroType};
+   updateE4Enemies(fakeE,dt);
+   e.x=fakeE.x;e.y=fakeE.y;e.vx=fakeE.vx;e.vy=fakeE.vy;e.fireT=fakeE.fireT;
+  }
+  else if(e.type.startsWith('e4_'))updateE4Enemies(e,dt);
   else updateE3Enemies(e,dt);
   e.y=clamp(e.y,e.h/2,H-e.h/2);
   if(e.x<-80){accountFormation(e.fid,false,e.x,e.y);enemies.splice(i,1);continue;}
@@ -882,7 +1015,7 @@ function updateForceItems(dt){
    force.active=true;force.state='docked';force.x=dockX();force.y=dockY();
    popup(fi.x,fi.y-26,'¡FORCE!','#35e0e8');AudioSys.bonus();forceItems.splice(i,1);}}}
 function update(dt){
- if(!mobileStarted)return;   // ← no actualizar hasta pulsar JUGAR
+ if(!mobileStarted)return;
  cooldown-=dt;bombCooldown-=dt;shake=Math.max(0,shake-dt*30);hurtFlash=Math.max(0,hurtFlash-dt);
  bossWarnT=Math.max(0,bossWarnT-dt);AudioSys.bossMode=!!boss;
  if(interacted||IS_TOUCH)hintAlpha=Math.max(0,hintAlpha-dt*0.25);
@@ -959,9 +1092,13 @@ function drawPellets(){for(const pl of pellets){
  ctx.globalAlpha=1;ctx.fillStyle='#ffd860';ctx.beginPath();ctx.arc(pl.x,pl.y,pl.r,0,7);ctx.fill();
  ctx.fillStyle='#fff';ctx.fillRect(Math.round(pl.x-2),Math.round(pl.y-2),2,2);}}
 function drawEnemy(e){const t=performance.now()/1000+e.ph;
- const paint=()=>{if(DRAWS[e.type])DRAWS[e.type](ctx,e.x,e.y,e.scale,t);
+ const paint=()=>{
+  if(DRAWS[e.type])DRAWS[e.type](ctx,e.x,e.y,e.scale,t);
   else if(e.type.startsWith('esbirro'))drawEsbirro(ctx,e.type,e.x,e.y,t);
-  else drawE3Enemy(ctx,e.type,e.x,e.y,t);};
+  else if(e.type==='valefor_esbirro')drawE4Enemy(ctx,e.esbirroType||'e4_0',e.x,e.y,t);
+  else if(e.type.startsWith('e4_'))drawE4Enemy(ctx,e.type,e.x,e.y,t);
+  else drawE3Enemy(ctx,e.type,e.x,e.y,t);
+ };
  paint();
  if(e.flash>0){ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=clamp(e.flash/.09,0,1)*.85;paint();ctx.restore();}}
 function drawBossSprite(b,t){const bi=BOSS_IMGS[b.type];
@@ -1054,6 +1191,8 @@ function draw(){
  if(hintAlpha>0&&gameState==='play'){ctx.globalAlpha=hintAlpha*.8;ctx.fillStyle='#8b93a8';
   ctx.font='14px monospace';ctx.textAlign='center';ctx.textBaseline='bottom';
   ctx.fillText(IS_TOUCH?'STICK MOVER · A DISPARO · B BOMBA · X FORCE':'FLECHAS/WASD · Z DISPARA · X BOMBA · C FORCE · M SONIDO',W/2,H-22);
+  const phaseMsg=wave>=E4_START_WAVE?'¡FASE 4: ENEMIGOS ÉLITE!':wave>=E3_START_WAVE?'¡FASE 3: NUEVOS ENEMIGOS!':'OLEADA '+wave+'/'+BOSS_EVERY+' PARA EL JEFE';
+  ctx.fillText(phaseMsg,W/2,H-42);
   ctx.globalAlpha=1;}
 }
 let last=performance.now();
