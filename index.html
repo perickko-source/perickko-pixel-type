@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>PIXELMASTER · Entre Píxeles Anda el Juego</title>
+<meta name="screen-orientation" content="landscape">
+<title>PIXEL-TYPE · Entre Píxeles Anda el Juego</title>
 <style>
   html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#000;}
   body{position:fixed;inset:0;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;}
@@ -32,7 +33,7 @@
   }
   #screenArea #game{
     width:100%;height:100%;
-    image-rendering:auto;   /* ← suaviza el zoom out en móvil */
+    image-rendering:auto;
   }
 
   #stick{
@@ -63,6 +64,90 @@
   #cal label{display:block;margin:4px 0 1px;color:#8b93a8;}
   #cal input{width:100%;}
   #cal b{color:#ffd860;}
+
+  /* ═══════ OVERLAY INICIAL (solo móvil) ═══════ */
+  #startOverlay{
+    display:none;
+    position:fixed;inset:0;z-index:100;
+    background:radial-gradient(ellipse at center,#0d1226 0%,#05060d 100%);
+    flex-direction:column;align-items:center;justify-content:center;
+    color:#fff;font-family:monospace;
+    padding:20px;box-sizing:border-box;
+  }
+  #startOverlay .logo{
+    font-size:clamp(36px,9vw,72px);
+    font-weight:bold;
+    letter-spacing:4px;
+    color:#ffd860;
+    text-shadow:4px 4px 0 #e8283c, 8px 8px 0 #05060d;
+    margin-bottom:8px;
+    text-align:center;
+  }
+  #startOverlay .subtitle{
+    font-size:clamp(12px,3vw,18px);
+    color:#8b93a8;
+    letter-spacing:3px;
+    margin-bottom:40px;
+    text-align:center;
+  }
+  #startBtn{
+    background:#e8283c;
+    color:#fff;
+    border:3px solid #ffd860;
+    padding:18px 60px;
+    font-size:clamp(18px,5vw,28px);
+    font-weight:bold;
+    font-family:monospace;
+    letter-spacing:4px;
+    cursor:pointer;
+    border-radius:8px;
+    box-shadow:0 6px 0 #a01226, 0 8px 20px rgba(0,0,0,.5);
+    transition:transform .1s, box-shadow .1s;
+  }
+  #startBtn:active{
+    transform:translateY(4px);
+    box-shadow:0 2px 0 #a01226, 0 4px 10px rgba(0,0,0,.5);
+  }
+  #startOverlay .hint{
+    margin-top:30px;
+    font-size:12px;
+    color:#5a6178;
+    letter-spacing:2px;
+    text-align:center;
+  }
+
+  /* ═══════ OVERLAY DE GIRO (solo móvil, solo vertical) ═══════ */
+  #rotateOverlay{
+    display:none;
+    position:fixed;inset:0;z-index:110;
+    background:#05060d;
+    flex-direction:column;align-items:center;justify-content:center;
+    color:#fff;font-family:monospace;
+  }
+  #rotateOverlay .icon{
+    font-size:80px;
+    margin-bottom:20px;
+    animation:rotateHint 2s ease-in-out infinite;
+  }
+  @keyframes rotateHint{
+    0%,100%{transform:rotate(0deg);}
+    50%{transform:rotate(90deg);}
+  }
+  #rotateOverlay .text{
+    font-size:clamp(20px,6vw,32px);
+    font-weight:bold;
+    letter-spacing:3px;
+    color:#ffd860;
+    text-shadow:2px 2px 0 #e8283c;
+    text-align:center;
+    padding:0 20px;
+  }
+  #rotateOverlay .sub{
+    margin-top:12px;
+    font-size:14px;
+    color:#8b93a8;
+    letter-spacing:2px;
+  }
 </style>
 </head>
 <body>
@@ -79,6 +164,21 @@
 </div>
 
 <div id="cal"></div>
+
+<!-- OVERLAY INICIAL (solo móvil) -->
+<div id="startOverlay">
+  <div class="logo">PIXEL-TYPE</div>
+  <div class="subtitle">ENTRE PÍXELES ANDA EL JUEGO</div>
+  <button id="startBtn">JUGAR</button>
+  <div class="hint">SE RECOMIENDA JUGAR EN HORIZONTAL</div>
+</div>
+
+<!-- OVERLAY DE GIRO (solo móvil, solo vertical) -->
+<div id="rotateOverlay">
+  <div class="icon">📱</div>
+  <div class="text">GIRA EL DISPOSITIVO</div>
+  <div class="sub">MODO HORIZONTAL</div>
+</div>
 
 <script>
 'use strict';
@@ -151,7 +251,47 @@ document.addEventListener('visibilitychange',()=>{ if(!AudioSys.ctx)return; if(d
 
 let W=0,H=0,bgGrad=null,shake=0,hurtFlash=0;
 const IS_TOUCH=matchMedia('(pointer:coarse)').matches||'ontouchstart' in window;
-const MOBILE_ZOOM=1.8;   /* ← de 1.2 a 1.5 */
+const MOBILE_ZOOM=1.8;
+
+/* ═══════ CONTROL DE INICIO MÓVIL ═══════ */
+let mobileStarted=false;
+const startOverlay=document.getElementById('startOverlay');
+const rotateOverlay=document.getElementById('rotateOverlay');
+const startBtn=document.getElementById('startBtn');
+
+if(IS_TOUCH){
+  startOverlay.style.display='flex';
+  checkRotation();
+}else{
+  mobileStarted=true;
+}
+
+startBtn.addEventListener('click',async()=>{
+  AudioSys.init();AudioSys.resume();
+  // Intentar fullscreen
+  try{
+    const el=document.documentElement;
+    if(el.requestFullscreen)await el.requestFullscreen();
+    else if(el.webkitRequestFullscreen)el.webkitRequestFullscreen();
+  }catch(e){}
+  // Intentar orientation lock
+  try{
+    if(screen.orientation&&screen.orientation.lock){
+      await screen.orientation.lock('landscape');
+    }
+  }catch(e){}
+  startOverlay.style.display='none';
+  mobileStarted=true;
+  layout();
+});
+
+function checkRotation(){
+  if(!IS_TOUCH)return;
+  const portrait=innerHeight>innerWidth;
+  rotateOverlay.style.display=portrait?'flex':'none';
+}
+window.addEventListener('resize',checkRotation);
+window.addEventListener('orientationchange',()=>setTimeout(checkRotation,100));
 
 const SHIP_W=221,SHIP_H=111;
 const ship={x:150,y:270,w:SHIP_W,h:SHIP_H,speed:320,invuln:0};
@@ -650,7 +790,9 @@ function keepShipInside(){ship.x=W>=ship.w?clamp(ship.x,ship.w/2,W-ship.w/2):W/2
 addEventListener('resize',layout);
 addEventListener('orientationchange',()=>setTimeout(layout,150));
 if(window.visualViewport)visualViewport.addEventListener('resize',layout);
-layout();resetGame();
+
+// En móvil NO llamamos a layout() ni resetGame() todavía: esperamos al botón JUGAR
+if(!IS_TOUCH){layout();resetGame();}
 
 function enemyShoot(e,angle,speed=150,col){if(enemyBullets.length>=MAX_ENEMY_BULLETS)return;
  enemyBullets.push({x:e.x,y:e.y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,r:6,col:col||'#e04fd0'});}
@@ -740,6 +882,7 @@ function updateForceItems(dt){
    force.active=true;force.state='docked';force.x=dockX();force.y=dockY();
    popup(fi.x,fi.y-26,'¡FORCE!','#35e0e8');AudioSys.bonus();forceItems.splice(i,1);}}}
 function update(dt){
+ if(!mobileStarted)return;   // ← no actualizar hasta pulsar JUGAR
  cooldown-=dt;bombCooldown-=dt;shake=Math.max(0,shake-dt*30);hurtFlash=Math.max(0,hurtFlash-dt);
  bossWarnT=Math.max(0,bossWarnT-dt);AudioSys.bossMode=!!boss;
  if(interacted||IS_TOUCH)hintAlpha=Math.max(0,hintAlpha-dt*0.25);
